@@ -14,6 +14,8 @@ if __package__ in (None, ""):
 from fasthtml.common import *
 from app.config import Config
 from app.routes.auth import register_auth_routes
+from app.routes.users import register_user_routes
+from app.routes.victims import register_victim_routes
 from app.routes.attendances import register_attendance_routes
 
 # Criação da aplicação FastHTML
@@ -37,6 +39,12 @@ rt = app.route
 
 # Registra rotas de autenticação
 register_auth_routes(app, rt)
+
+# Rotas de administração / perfil de usuários
+register_user_routes(app, rt)
+
+# Rotas de vítimas
+register_victim_routes(app, rt)
 
 # Registra rotas de atendimentos
 register_attendance_routes(app, rt)

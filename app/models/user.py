@@ -14,10 +14,12 @@ class User(Base, TimestampMixin):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     full_name = Column(String(255), nullable=False)
+    username = Column(String(50), nullable=False, unique=True)
     registration = Column(String(9), nullable=False, unique=True)
     email = Column(String(255), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
     rank = Column(String(50), nullable=False)
+    role = Column(String(20), nullable=False, default='common')
     is_active = Column(Boolean, default=True, nullable=False)
     
     __table_args__ = (
@@ -30,6 +32,10 @@ class User(Base, TimestampMixin):
             "'1º TEN PM', '2º TEN PM', 'ASP OF PM', 'ST PM', "
             "'1º SGT PM', '2º SGT PM', '3º SGT PM', 'CB PM', 'SD PM')",
             name='chk_rank'
+        ),
+        CheckConstraint(
+            "role IN ('admin', 'common')",
+            name='chk_role'
         ),
     )
     

@@ -26,7 +26,8 @@ def register_attendance_routes(app, rt):
                 cls="header-content"
             ),
             Div(
-                A("Novo Atendimento", href="/attendances/new", cls="btn btn-primary"),
+                A("Vítimas", href="/victims", cls="btn btn-primary"),
+                A("Meu perfil", href="/profile", cls="btn btn-secondary"),
                 A("Sair", href="/logout", cls="btn btn-secondary"),
                 cls="header-actions"
             ),
@@ -69,7 +70,8 @@ def register_attendance_routes(app, rt):
         else:
             table = Div(
                 P("Nenhum atendimento registrado ainda."),
-                A("Cadastrar primeiro atendimento", href="/attendances/new", cls="btn btn-primary"),
+                P("Cadastre uma vítima e, em seguida, registre o atendimento."),
+                A("Cadastrar primeira vítima", href="/victims/new", cls="btn btn-primary"),
                 cls="empty-state"
             )
         
@@ -85,210 +87,107 @@ def register_attendance_routes(app, rt):
     
     @rt('/attendances/new', methods='get')
     @require_auth
-    def get(request, session):
-        """Formulário de novo atendimento"""
+    def get(request, session, victim_id: str | None = None):
+        """Formulário de novo atendimento para uma vítima já cadastrada."""
         user = get_current_user(session)
-        
-        address_type_options = [
-            Option(addr_type, value=addr_type) 
-            for addr_type in Config.ADDRESS_TYPES
-        ]
-        
-        state_options = [
-            Option(state, value=state, selected=(state == 'RO'))
-            for state in Config.BRAZILIAN_STATES
-        ]
-        
+
+        # Se nenhuma vítima foi informada, orienta o usuário a ir para a lista de vítimas
+        if not victim_id:
+            return Titled(
+                "Novo Atendimento - Selecione a vítima",
+                Header(
+                    Div(
+                        H1("Novo atendimento"),
+                        P(f"{user['rank']} {user['name']}", cls="user-info"),
+                        cls="header-content",
+                    ),
+                    Div(
+                        A("Ir para lista de vítimas", href="/victims", cls="btn btn-primary"),
+                        A("Cadastrar nova vítima", href="/victims/new", cls="btn btn-secondary"),
+                        A("Voltar", href="/", cls="btn btn-secondary"),
+                        cls="header-actions",
+                    ),
+                    cls="main-header",
+                ),
+                Main(
+                    Div(
+                        P("Para registrar um atendimento, primeiro selecione a vítima na lista."),
+                        cls="empty-state",
+                    ),
+                    cls="container",
+                ),
+            )
+
+        victim = VictimService.get_victim_by_id(victim_id)
+        if not victim:
+            return Titled(
+                "Vítima não encontrada",
+                Main(
+                    Div("Vítima não encontrada", cls="alert alert-error"),
+                    A("Voltar para lista de vítimas", href="/victims", cls="btn btn-primary"),
+                    cls="container",
+                ),
+            )
+
         status_options = [
             Option(label, value=value)
             for value, label in Config.MEASURE_STATUS
         ]
-        
+
+        # Dados formatados da vítima (somente leitura)
+        birth_date_str = victim['birth_date'].strftime('%d/%m/%Y') if victim['birth_date'] else '-'
+
+        address_parts = []
+        if victim['address_type'] and victim['address_name']:
+            address_parts.append(f"{victim['address_type']} {victim['address_name']}")
+        if victim['address_number']:
+            address_parts.append(f"nº {victim['address_number']}")
+        if victim['address_complement']:
+            address_parts.append(victim['address_complement'])
+        full_address = ", ".join(address_parts) if address_parts else "Não informado"
+
+        location_parts = []
+        if victim['neighborhood']:
+            location_parts.append(victim['neighborhood'])
+        if victim['city']:
+            location_parts.append(victim['city'])
+        if victim['state']:
+            location_parts.append(victim['state'])
+        full_location = " - ".join(location_parts) if location_parts else "Não informado"
+
         return Titled(
             "Novo Atendimento - Patrulha Maria da Penha",
             Header(
                 Div(
-                    H1("Novo Atendimento"),
+                    H1("Novo atendimento"),
                     P(f"{user['rank']} {user['name']}", cls="user-info"),
-                    cls="header-content"
+                    cls="header-content",
                 ),
                 Div(
-                    A("Voltar", href="/", cls="btn btn-secondary"),
-                    cls="header-actions"
+                    A("Voltar", href="/victims", cls="btn btn-secondary"),
+                    cls="header-actions",
                 ),
-                cls="main-header"
+                cls="main-header",
             ),
             Main(
                 Form(
-                    # Seção: Dados da Vítima
+                    # Vítima selecionada (somente leitura)
+                    Input(type="hidden", id="victim_id", name="victim_id", value=str(victim['id'])),
                     Fieldset(
-                        Legend("Dados da Vítima"),
-                        Div(
-                            Div(
-                                Label("Nome Completo *", _for="full_name"),
-                                Input(
-                                    type="text",
-                                    id="full_name",
-                                    name="full_name",
-                                    required=True,
-                                    placeholder="Maria da Silva"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Data de Nascimento *", _for="birth_date"),
-                                Input(
-                                    type="date",
-                                    id="birth_date",
-                                    name="birth_date",
-                                    required=True
-                                ),
-                                cls="form-group"
-                            ),
-                            cls="form-row"
+                        Legend("Vítima selecionada"),
+                        Dl(
+                            Dt("Nome:"), Dd(victim['full_name']),
+                            Dt("Data de nascimento:"), Dd(birth_date_str),
+                            Dt("CPF:"), Dd(victim['cpf'] or "Não informado"),
+                            Dt("Telefone:"), Dd(victim['phone'] or "Não informado"),
+                            Dt("Telefone secundário:"), Dd(victim['secondary_phone'] or "Não informado"),
+                            Dt("Endereço:"), Dd(full_address),
+                            Dt("Localidade:"), Dd(full_location),
+                            Dt("CEP:"), Dd(victim['zip_code'] or "Não informado"),
+                            cls="details-list",
                         ),
-                        Div(
-                            Div(
-                                Label("CPF", _for="cpf"),
-                                Input(
-                                    type="text",
-                                    id="cpf",
-                                    name="cpf",
-                                    placeholder="000.000.000-00",
-                                    maxlength="14"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Telefone Principal", _for="phone"),
-                                Input(
-                                    type="tel",
-                                    id="phone",
-                                    name="phone",
-                                    placeholder="(69) 99999-9999"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Telefone Secundário", _for="secondary_phone"),
-                                Input(
-                                    type="tel",
-                                    id="secondary_phone",
-                                    name="secondary_phone",
-                                    placeholder="(69) 99999-9999"
-                                ),
-                                cls="form-group"
-                            ),
-                            cls="form-row"
-                        )
                     ),
-                    
-                    # Seção: Endereço
-                    Fieldset(
-                        Legend("Endereço"),
-                        Div(
-                            Div(
-                                Label("CEP", _for="zip_code"),
-                                Div(
-                                    Input(
-                                        type="text",
-                                        id="zip_code",
-                                        name="zip_code",
-                                        placeholder="76800-000",
-                                        maxlength="9"
-                                    ),
-                                    Button(
-                                        "Buscar CEP",
-                                        type="button",
-                                        onclick="buscarCEP()",
-                                        cls="btn btn-sm"
-                                    ),
-                                    cls="input-group"
-                                ),
-                                Small("Opcional - pode preencher manualmente", cls="help-text"),
-                                cls="form-group"
-                            ),
-                            cls="form-row"
-                        ),
-                        Div(
-                            Div(
-                                Label("Tipo de Logradouro", _for="address_type"),
-                                Select(
-                                    *address_type_options,
-                                    id="address_type",
-                                    name="address_type"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Nome do Logradouro", _for="address_name"),
-                                Input(
-                                    type="text",
-                                    id="address_name",
-                                    name="address_name",
-                                    placeholder="das Flores"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Número", _for="address_number"),
-                                Input(
-                                    type="text",
-                                    id="address_number",
-                                    name="address_number",
-                                    placeholder="123"
-                                ),
-                                cls="form-group"
-                            ),
-                            cls="form-row"
-                        ),
-                        Div(
-                            Div(
-                                Label("Bairro", _for="neighborhood"),
-                                Input(
-                                    type="text",
-                                    id="neighborhood",
-                                    name="neighborhood",
-                                    placeholder="Centro"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Cidade", _for="city"),
-                                Input(
-                                    type="text",
-                                    id="city",
-                                    name="city",
-                                    placeholder="Porto Velho"
-                                ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Estado", _for="state"),
-                                Select(
-                                    *state_options,
-                                    id="state",
-                                    name="state"
-                                ),
-                                cls="form-group"
-                            ),
-                            cls="form-row"
-                        ),
-                        Div(
-                            Div(
-                                Label("Complemento", _for="address_complement"),
-                                Input(
-                                    type="text",
-                                    id="address_complement",
-                                    name="address_complement",
-                                    placeholder="Apto 201, Bloco B"
-                                ),
-                                cls="form-group"
-                            ),
-                            cls="form-row"
-                        )
-                    ),
-                    
+
                     # Seção: Medida Protetiva
                     Fieldset(
                         Legend("Medida Protetiva"),
@@ -300,9 +199,9 @@ def register_attendance_routes(app, rt):
                                     id="measure_number",
                                     name="measure_number",
                                     required=True,
-                                    placeholder="0000000-00.0000.0.00.0000"
+                                    placeholder="0000000-00.0000.0.00.0000",
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
                             Div(
                                 Label("Data de Início *", _for="measure_start_date"),
@@ -310,9 +209,9 @@ def register_attendance_routes(app, rt):
                                     type="date",
                                     id="measure_start_date",
                                     name="measure_start_date",
-                                    required=True
+                                    required=True,
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
                             Div(
                                 Label("Situação *", _for="measure_status"),
@@ -320,14 +219,14 @@ def register_attendance_routes(app, rt):
                                     *status_options,
                                     id="measure_status",
                                     name="measure_status",
-                                    required=True
+                                    required=True,
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
-                            cls="form-row"
-                        )
+                            cls="form-row",
+                        ),
                     ),
-                    
+
                     # Seção: Atendimento
                     Fieldset(
                         Legend("Dados do Atendimento"),
@@ -339,11 +238,11 @@ def register_attendance_routes(app, rt):
                                     id="visit_datetime",
                                     name="visit_datetime",
                                     required=True,
-                                    value=datetime.now().strftime('%Y-%m-%dT%H:%M')
+                                    value=datetime.now().strftime('%Y-%m-%dT%H:%M'),
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
-                            cls="form-row"
+                            cls="form-row",
                         ),
                         Div(
                             Div(
@@ -352,20 +251,20 @@ def register_attendance_routes(app, rt):
                                     id="notes",
                                     name="notes",
                                     rows="4",
-                                    placeholder="Descreva detalhes da visita, situação encontrada, etc."
+                                    placeholder="Descreva detalhes da visita, situação encontrada, etc.",
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
-                            cls="form-row"
-                        )
+                            cls="form-row",
+                        ),
                     ),
-                    
+
                     # Seção: Geolocalização
                     Fieldset(
                         Legend("Geolocalização (Opcional)"),
                         Div(
                             P("A coleta de localização é opcional, mas ajuda em análises futuras."),
-                            cls="info-message"
+                            cls="info-message",
                         ),
                         Div(
                             Div(
@@ -375,9 +274,9 @@ def register_attendance_routes(app, rt):
                                     id="latitude",
                                     name="latitude",
                                     placeholder="-8.7612",
-                                    readonly=True
+                                    readonly=True,
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
                             Div(
                                 Label("Longitude", _for="longitude"),
@@ -386,11 +285,11 @@ def register_attendance_routes(app, rt):
                                     id="longitude",
                                     name="longitude",
                                     placeholder="-63.9004",
-                                    readonly=True
+                                    readonly=True,
                                 ),
-                                cls="form-group"
+                                cls="form-group",
                             ),
-                            cls="form-row"
+                            cls="form-row",
                         ),
                         Div(
                             Button(
@@ -398,7 +297,7 @@ def register_attendance_routes(app, rt):
                                 type="button",
                                 onclick="captureLocation()",
                                 cls="btn btn-secondary",
-                                id="capture-btn"
+                                id="capture-btn",
                             ),
                             Button(
                                 "🗺️ Conferir no Mapa",
@@ -406,35 +305,45 @@ def register_attendance_routes(app, rt):
                                 onclick="checkOnMap()",
                                 cls="btn btn-secondary",
                                 id="map-btn",
-                                style="display:none;"
+                                style="display:none;",
                             ),
-                            cls="button-group"
+                            cls="button-group",
                         ),
-                        Div(id="location-status", cls="status-message")
+                        Div(id="location-status", cls="status-message"),
                     ),
-                    
+
                     # Botões de ação
                     Div(
                         Button("Salvar Atendimento", type="submit", cls="btn btn-primary"),
-                        A("Cancelar", href="/", cls="btn btn-secondary"),
-                        cls="button-group form-actions"
+                        A("Cancelar", href="/victims", cls="btn btn-secondary"),
+                        cls="button-group form-actions",
                     ),
-                    
+
                     method="post",
-                    action="/attendances/new"
+                    action=f"/attendances/new?victim_id={victim_id}",
                 ),
-                cls="container form-container"
+                cls="container form-container",
             ),
             Script(src="/static/js/geolocation.js"),
-            Script(src="/static/js/cep.js")
         )
     
     @rt('/attendances/new', methods='post')
     @require_auth
     def post(request, session, form_data: dict):
-        """Processa novo atendimento"""
+        """Processa novo atendimento para uma vítima já cadastrada."""
         user = get_current_user(session)
-        form_data = dict(form_data)
+        data = dict(form_data)
+
+        victim_id = data.get('victim_id')
+        if not victim_id:
+            return Titled(
+                "Vítima não informada",
+                Main(
+                    Div("Nenhuma vítima foi informada para o atendimento.", cls="alert alert-error"),
+                    A("Voltar para lista de vítimas", href="/victims", cls="btn btn-primary"),
+                    cls="container",
+                ),
+            )
 
         def parse_date(value):
             if not value:
@@ -453,61 +362,32 @@ def register_attendance_routes(app, rt):
                 return float(value)
             except ValueError:
                 return None
-        
-        # Criar vítima
-        victim_data = {
-            'full_name': form_data.get('full_name'),
-            'birth_date': parse_date(form_data.get('birth_date')),
-            'cpf': form_data.get('cpf'),
-            'phone': form_data.get('phone'),
-            'secondary_phone': form_data.get('secondary_phone'),
-            'address_type': form_data.get('address_type'),
-            'address_name': form_data.get('address_name'),
-            'address_number': form_data.get('address_number'),
-            'address_complement': form_data.get('address_complement'),
-            'neighborhood': form_data.get('neighborhood'),
-            'city': form_data.get('city'),
-            'state': form_data.get('state'),
-            'zip_code': form_data.get('zip_code')
-        }
-        
-        success_victim, victim_id = VictimService.create_victim(victim_data)
-        
-        if not success_victim:
-            return Titled(
-                "Erro",
-                Main(
-                    Div(f"Erro ao cadastrar vítima: {victim_id}", cls="alert alert-error"),
-                    A("Voltar", href="/attendances/new", cls="btn btn-primary"),
-                    cls="container"
-                )
-            )
-        
-        # Criar atendimento
+
+        # Criar atendimento vinculado à vítima existente
         attendance_data = {
             'victim_id': victim_id,
             'user_id': user['id'],
-            'measure_number': form_data.get('measure_number'),
-            'measure_start_date': parse_date(form_data.get('measure_start_date')),
-            'measure_status': form_data.get('measure_status'),
-            'visit_datetime': parse_datetime(form_data.get('visit_datetime')),
-            'notes': form_data.get('notes'),
-            'latitude': parse_decimal(form_data.get('latitude')),
-            'longitude': parse_decimal(form_data.get('longitude'))
+            'measure_number': data.get('measure_number'),
+            'measure_start_date': parse_date(data.get('measure_start_date')),
+            'measure_status': data.get('measure_status'),
+            'visit_datetime': parse_datetime(data.get('visit_datetime')),
+            'notes': data.get('notes'),
+            'latitude': parse_decimal(data.get('latitude')),
+            'longitude': parse_decimal(data.get('longitude')),
         }
-        
+
         success_att, attendance_id = AttendanceService.create_attendance(attendance_data)
-        
+
         if not success_att:
             return Titled(
                 "Erro",
                 Main(
                     Div(f"Erro ao cadastrar atendimento: {attendance_id}", cls="alert alert-error"),
-                    A("Voltar", href="/attendances/new", cls="btn btn-primary"),
-                    cls="container"
-                )
+                    A("Voltar para a vítima", href=f"/attendances/new?victim_id={victim_id}", cls="btn btn-primary"),
+                    cls="container",
+                ),
             )
-        
+
         return RedirectResponse(f'/attendances/{attendance_id}', status_code=303)
     
     @rt('/attendances/{attendance_id}')
