@@ -128,6 +128,35 @@ button:disabled {
     cursor: not-allowed;
 }
 
+.btn-danger {
+    background: var(--error-color);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #b71c1c;
+}
+
+/* Botões com ícones via pseudo-elementos */
+.btn-icon {
+    position: relative;
+    padding-left: 2.25rem;
+}
+
+.btn-icon::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+}
+
+.btn-icon-add::before { content: '+'; }
+.btn-icon-edit::before { content: '\270E'; } /* lápis */
+.btn-icon-delete::before { content: '\2716'; } /* X */
+.btn-icon-view::before { content: '\1F441'; } /* olho simples */
+
 .button-group {
     display: flex;
     gap: 1rem;

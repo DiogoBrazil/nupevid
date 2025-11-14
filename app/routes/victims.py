@@ -253,10 +253,10 @@ def register_victim_routes(app, rt):
                     Td(v['city'] or '-'),
                     Td(last_visit),
                     Td(
-                        A("Novo atendimento", href=f"/attendances/new?victim_id={v['id']}", cls="btn btn-sm btn-primary"),
-                        A("Editar", href=f"/victims/{v['id']}/edit", cls="btn btn-sm"),
+                        A("Novo atendimento", href=f"/attendances/new?victim_id={v['id']}", cls="btn btn-sm btn-primary btn-icon btn-icon-add"),
+                        A("Editar", href=f"/victims/{v['id']}/edit", cls="btn btn-sm btn-icon btn-icon-edit"),
                         Form(
-                            Button("Excluir", type="submit", cls="btn btn-sm btn-danger"),
+                            Button("Excluir", type="submit", cls="btn btn-sm btn-danger btn-icon btn-icon-delete"),
                             method="post",
                             action=f"/victims/{v['id']}/delete",
                             style="display:inline-block;margin-left:0.5rem;",
@@ -296,7 +296,7 @@ def register_victim_routes(app, rt):
                 cls="header-content",
             ),
             Div(
-                A("Nova vítima", href="/victims/new", cls="btn btn-primary"),
+                A("Nova vítima", href="/victims/new", cls="btn btn-primary btn-icon btn-icon-add"),
                 A("Voltar", href="/", cls="btn btn-secondary"),
                 cls="header-actions",
             ),

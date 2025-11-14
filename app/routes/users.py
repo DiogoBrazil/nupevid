@@ -163,9 +163,9 @@ def register_user_routes(app, rt):
                     Td(u['rank']),
                     Td("Administrador" if u['role'] == 'admin' else "Comum"),
                     Td(
-                        A("Editar", href=f"/users/{u['id']}/edit", cls="btn btn-sm"),
+                        A("Editar", href=f"/users/{u['id']}/edit", cls="btn btn-sm btn-icon btn-icon-edit"),
                         Form(
-                            Button("Excluir", type="submit", cls="btn btn-sm btn-danger"),
+                            Button("Excluir", type="submit", cls="btn btn-sm btn-danger btn-icon btn-icon-delete"),
                             method="post",
                             action=f"/users/{u['id']}/delete",
                             style="display:inline-block;margin-left:0.5rem;",
@@ -205,7 +205,7 @@ def register_user_routes(app, rt):
                 cls="header-content",
             ),
             Div(
-                A("Novo usuário", href="/users/new", cls="btn btn-primary"),
+                A("Novo usuário", href="/users/new", cls="btn btn-primary btn-icon btn-icon-add"),
                 A("Voltar", href="/", cls="btn btn-secondary"),
                 cls="header-actions",
             ),

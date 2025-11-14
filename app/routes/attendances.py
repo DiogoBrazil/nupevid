@@ -47,7 +47,7 @@ def register_attendance_routes(app, rt):
                         Td(att['measure_number']),
                         Td(f"{att['officer_rank']} {att['officer_name']}"),
                         Td(
-                            A("Ver Detalhes", href=f"/attendances/{att['id']}", cls="btn btn-sm"),
+                            A("Ver detalhes", href=f"/attendances/{att['id']}", cls="btn btn-sm btn-icon btn-icon-view"),
                             cls="actions"
                         )
                     )
