@@ -19,6 +19,20 @@ def register_attendance_routes(app, rt):
         attendances = AttendanceService.list_attendances()
         
         # Header com informações do usuário
+        # Botões disponíveis
+        action_buttons = [
+            A("Vítimas", href="/victims", cls="btn btn-primary"),
+        ]
+        
+        # Se for admin, adiciona botão de gestão de usuários
+        if user.get('role') == 'admin':
+            action_buttons.insert(0, A("Usuários", href="/users", cls="btn btn-primary btn-icon btn-icon-add"))
+        
+        action_buttons.extend([
+            A("Meu perfil", href="/profile", cls="btn btn-secondary"),
+            A("Sair", href="/logout", cls="btn btn-secondary"),
+        ])
+        
         header = Header(
             Div(
                 H1("Patrulha Maria da Penha"),
@@ -26,9 +40,7 @@ def register_attendance_routes(app, rt):
                 cls="header-content"
             ),
             Div(
-                A("Vítimas", href="/victims", cls="btn btn-primary"),
-                A("Meu perfil", href="/profile", cls="btn btn-secondary"),
-                A("Sair", href="/logout", cls="btn btn-secondary"),
+                *action_buttons,
                 cls="header-actions"
             ),
             cls="main-header"
@@ -47,7 +59,11 @@ def register_attendance_routes(app, rt):
                         Td(att['measure_number']),
                         Td(f"{att['officer_rank']} {att['officer_name']}"),
                         Td(
-                            A("Ver detalhes", href=f"/attendances/{att['id']}", cls="btn btn-sm btn-icon btn-icon-view"),
+                            A(
+                                Span("Ver detalhes", cls="btn-text"),
+                                href=f"/attendances/{att['id']}",
+                                cls="btn btn-sm btn-secondary btn-icon btn-icon-view btn-icon-only"
+                            ),
                             cls="actions"
                         )
                     )
@@ -60,8 +76,8 @@ def register_attendance_routes(app, rt):
                         Th("Vítima"),
                         Th("Bairro"),
                         Th("Medida Protetiva"),
-                        Th("Policial"),
-                        Th("Ações")
+                        Th("Policial Responsável"),
+                        Th("Ações", cls="text-center")
                     )
                 ),
                 Tbody(*rows),

@@ -8,7 +8,11 @@ from app.config import Config
 def _user_form(action: str, *, full_name: str = "", username: str = "", registration: str = "",
                email: str = "", rank: str = "", role: str = "common", show_role: bool = True,
                show_password: bool = True, is_edit: bool = False, submit_label: str = "Salvar"):
-    """Componente reutilizável de formulário de usuário."""
+    """Componente reutilizável de formulário de usuário.
+
+    Visual inspirado em `register_user_model.md` (labels flutuantes), adaptado
+    para os campos necessários do usuário do sistema.
+    """
     rank_options = [
         Option(r, value=r, selected=(r == rank)) for r in Config.POLICE_RANKS
     ]
@@ -22,53 +26,56 @@ def _user_form(action: str, *, full_name: str = "", username: str = "", registra
 
     fields = [
         Div(
-            Label("Nome completo", _for="full_name"),
             Input(
                 type="text",
                 id="full_name",
                 name="full_name",
                 value=full_name,
                 required=True,
+                placeholder=" ",
             ),
-            cls="form-group",
+            Label("Nome completo", _for="full_name"),
+            cls="user-input-field",
         ),
         Div(
-            Label("Nome de usuário", _for="username"),
             Input(
                 type="text",
                 id="username",
                 name="username",
                 value=username,
                 required=True,
+                placeholder=" ",
             ),
+            Label("Nome de usuário", _for="username"),
             Small("Utilizado no login; deve ser único", cls="help-text"),
-            cls="form-group",
+            cls="user-input-field",
         ),
         Div(
-            Label("Matrícula (9 dígitos, começando com 1000)", _for="registration"),
             Input(
                 type="text",
                 id="registration",
                 name="registration",
                 value=registration,
-                placeholder="100012345",
+                placeholder=" ",
                 required=True,
                 pattern="1000[0-9]{5}",
                 maxlength="9",
             ),
+            Label("Matrícula (9 dígitos, começando com 1000)", _for="registration"),
             Small("Exemplo: 100012345", cls="help-text"),
-            cls="form-group",
+            cls="user-input-field",
         ),
         Div(
-            Label("E-mail", _for="email"),
             Input(
                 type="email",
                 id="email",
                 name="email",
                 value=email,
                 required=True,
+                placeholder=" ",
             ),
-            cls="form-group",
+            Label("E-mail", _for="email"),
+            cls="user-input-field",
         ),
         Div(
             Label("Posto/Graduação", _for="rank"),
@@ -101,25 +108,27 @@ def _user_form(action: str, *, full_name: str = "", username: str = "", registra
         fields.extend(
             [
                 Div(
-                    Label("Senha", _for="password"),
                     Input(
                         type="password",
                         id="password",
                         name="password",
                         minlength="6" if not is_edit else None,
+                        placeholder=" ",
                     ),
+                    Label("Senha", _for="password"),
                     Small(password_help, cls="help-text"),
-                    cls="form-group",
+                    cls="user-input-field",
                 ),
                 Div(
-                    Label("Confirmar senha", _for="confirm_password"),
                     Input(
                         type="password",
                         id="confirm_password",
                         name="confirm_password",
                         minlength="6" if not is_edit else None,
+                        placeholder=" ",
                     ),
-                    cls="form-group",
+                    Label("Confirmar senha", _for="confirm_password"),
+                    cls="user-input-field",
                 ),
             ]
         )
@@ -136,6 +145,7 @@ def _user_form(action: str, *, full_name: str = "", username: str = "", registra
         *fields,
         method="post",
         action=action,
+        cls="user-form",
     )
 
 
@@ -154,6 +164,10 @@ def register_user_routes(app, rt):
 
         rows = []
         for u in users:
+            role_badge = Span(
+                "Admin" if u['role'] == 'admin' else "Comum",
+                cls="badge badge-primary" if u['role'] == 'admin' else "badge badge-secondary"
+            )
             rows.append(
                 Tr(
                     Td(u['full_name']),
@@ -161,14 +175,21 @@ def register_user_routes(app, rt):
                     Td(u['registration']),
                     Td(u['email']),
                     Td(u['rank']),
-                    Td("Administrador" if u['role'] == 'admin' else "Comum"),
+                    Td(role_badge),
                     Td(
-                        A("Editar", href=f"/users/{u['id']}/edit", cls="btn btn-sm btn-icon btn-icon-edit"),
+                        A(
+                            Span("Editar", cls="btn-text"),
+                            href=f"/users/{u['id']}/edit",
+                            cls="btn btn-sm btn-secondary btn-icon btn-icon-edit btn-icon-only"
+                        ),
                         Form(
-                            Button("Excluir", type="submit", cls="btn btn-sm btn-danger btn-icon btn-icon-delete"),
+                            Button(
+                                Span("Excluir", cls="btn-text"),
+                                type="submit",
+                                cls="btn btn-sm btn-danger btn-icon btn-icon-delete btn-icon-only"
+                            ),
                             method="post",
                             action=f"/users/{u['id']}/delete",
-                            style="display:inline-block;margin-left:0.5rem;",
                         ),
                         cls="actions",
                     ),
@@ -179,13 +200,13 @@ def register_user_routes(app, rt):
             Table(
                 Thead(
                     Tr(
-                        Th("Nome"),
+                        Th("Nome Completo"),
                         Th("Usuário"),
                         Th("Matrícula"),
                         Th("E-mail"),
                         Th("Posto/Grad."),
                         Th("Papel"),
-                        Th("Ações"),
+                        Th("Ações", cls="text-center"),
                     )
                 ),
                 Tbody(*rows) if rows else None,

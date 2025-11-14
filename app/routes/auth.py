@@ -11,100 +11,91 @@ def register_auth_routes(app, rt):
     
     @rt('/login', methods='get')
     def get(session):
-        """Página de login (somente acesso, sem auto-cadastro)"""
+        """Página de login (somente acesso, sem auto-cadastro)."""
         # Se já está logado, redireciona para home
         if session.get('user_id'):
             return RedirectResponse('/', status_code=303)
 
-        return Titled(
-            "Login - Patrulha Maria da Penha",
+        return (
+            Title("NUPEVID/7ºBPM"),
             Main(
-                Card(
-                    H2("Acesso ao Sistema"),
-                    P("Entre com suas credenciais", cls="text-muted"),
-                    Form(
-                        Div(
-                            Label("Login", _for="login"),
+                Div(
+                    Div(
+                        Form(
+                            Div("NUPEVID/7ºBPM", cls="login-logo"),
+                            Div("Sistema de Atendimento – Patrulha Maria da Penha", cls="login-subtitle"),
                             Input(
                                 type="text",
                                 id="login",
                                 name="login",
-                                placeholder="usuário ou e-mail",
-                                required=True
+                                placeholder="E-mail",
+                                required=True,
+                                cls="login-input-pill",
                             ),
-                            cls="form-group"
-                        ),
-                        Div(
-                            Label("Senha", _for="password"),
                             Input(
                                 type="password",
                                 id="password",
                                 name="password",
-                                placeholder="••••••••",
+                                placeholder="Senha",
                                 required=True,
-                                minlength="6"
+                                minlength="6",
+                                cls="login-input-pill",
                             ),
-                            cls="form-group"
+                            Button("Entrar", type="submit", cls="btn-primary login-pill-submit"),
+                            method="post",
+                            action="/login",
+                            cls="login-hero-form",
                         ),
-                        Div(
-                            Button("Entrar", type="submit", cls="btn-primary"),
-                            cls="button-group"
-                        ),
-                        method="post",
-                        action="/login"
+                        cls="login-hero",
                     ),
-                    cls="auth-card"
+                    cls="login-hero-container",
                 ),
-                cls="container auth-container"
-            )
+            ),
         )
-    
+
     @rt('/login', methods='post')
     def post(login: str, password: str, session):
         """Processa login"""
         success, result = UserService.authenticate(login, password)
 
         if not success:
-            return Titled(
-                "Login - Patrulha Maria da Penha",
+            return (
+                Title("NUPEVID/7ºBPM"),
                 Main(
-                    Card(
-                        Div(result, cls="alert alert-error"),
-                        H2("Acesso ao Sistema"),
-                        Form(
-                            Div(
-                                Label("Login", _for="login"),
+                    Div(
+                        Div(
+                            Form(
+                                Div("NUPEVID/7ºBPM", cls="login-logo"),
+                                Div("Sistema de Atendimento – Patrulha Maria da Penha", cls="login-subtitle"),
+                                Div(result, cls="alert alert-error"),
                                 Input(
                                     type="text",
                                     id="login",
                                     name="login",
                                     value=login,
-                                    required=True
+                                    placeholder="E-mail",
+                                    required=True,
+                                    cls="login-input-pill",
                                 ),
-                                cls="form-group"
-                            ),
-                            Div(
-                                Label("Senha", _for="password"),
                                 Input(
                                     type="password",
                                     id="password",
                                     name="password",
+                                    placeholder="Senha",
                                     required=True,
-                                    minlength="6"
+                                    minlength="6",
+                                    cls="login-input-pill",
                                 ),
-                                cls="form-group"
+                                Button("Entrar", type="submit", cls="btn-primary login-pill-submit"),
+                                method="post",
+                                action="/login",
+                                cls="login-hero-form",
                             ),
-                            Div(
-                                Button("Entrar", type="submit", cls="btn-primary"),
-                                cls="button-group"
-                            ),
-                            method="post",
-                            action="/login"
+                            cls="login-hero",
                         ),
-                        cls="auth-card"
+                        cls="login-hero-container",
                     ),
-                    cls="container auth-container"
-                )
+                ),
             )
 
         # Salvar dados na sessão
@@ -116,9 +107,7 @@ def register_auth_routes(app, rt):
         session['user_username'] = result['username']
 
         return RedirectResponse('/', status_code=303)
-    
-    
-    
+
     @rt('/logout', methods='get')
     def get(session):
         """Logout"""

@@ -253,13 +253,24 @@ def register_victim_routes(app, rt):
                     Td(v['city'] or '-'),
                     Td(last_visit),
                     Td(
-                        A("Novo atendimento", href=f"/attendances/new?victim_id={v['id']}", cls="btn btn-sm btn-primary btn-icon btn-icon-add"),
-                        A("Editar", href=f"/victims/{v['id']}/edit", cls="btn btn-sm btn-icon btn-icon-edit"),
+                        A(
+                            Span("Novo atendimento", cls="btn-text"),
+                            href=f"/attendances/new?victim_id={v['id']}",
+                            cls="btn btn-sm btn-primary btn-icon btn-icon-service btn-icon-only"
+                        ),
+                        A(
+                            Span("Editar", cls="btn-text"),
+                            href=f"/victims/{v['id']}/edit",
+                            cls="btn btn-sm btn-secondary btn-icon btn-icon-edit btn-icon-only"
+                        ),
                         Form(
-                            Button("Excluir", type="submit", cls="btn btn-sm btn-danger btn-icon btn-icon-delete"),
+                            Button(
+                                Span("Excluir", cls="btn-text"),
+                                type="submit",
+                                cls="btn btn-sm btn-danger btn-icon btn-icon-delete btn-icon-only"
+                            ),
                             method="post",
                             action=f"/victims/{v['id']}/delete",
-                            style="display:inline-block;margin-left:0.5rem;",
                         ),
                         cls="actions",
                     ),
@@ -270,12 +281,12 @@ def register_victim_routes(app, rt):
             Table(
                 Thead(
                     Tr(
-                        Th("Nome"),
+                        Th("Nome Completo"),
                         Th("CPF"),
                         Th("Bairro"),
                         Th("Cidade"),
-                        Th("Última visita"),
-                        Th("Ações"),
+                        Th("Última Visita"),
+                        Th("Ações", cls="text-center"),
                     )
                 ),
                 Tbody(*rows) if rows else None,
